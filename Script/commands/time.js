@@ -4,7 +4,7 @@ const fs = require("fs-extra");
 const moment = require("moment-timezone");
 
 module.exports.config = {
- name: "time",
+ name: "black hold",
  version: "1.0.1",
  hasPermssion: 0,
  credits: "Joshua Sy", //don't change the credits please
@@ -27,11 +27,13 @@ module.exports.run = async function({ api, event }) {
  const currentTime = moment.tz("Asia/Dhaka").format("『D/MM/YYYY』 【hh:mm:ss】");
 
  const imgLinks = [
- "https://i.imgur.com/EuiRi4v.jpeg",
- "https://i.imgur.com/ZjxQx17.jpeg",
- "https://i.imgur.com/dOO6Af5.jpeg",
- "https://i.imgur.com/WMIngcC.jpeg",
- "https://i.imgur.com/2dJSfXq.jpeg"
+ "https://i.imgur.com/CY5sgsk.jpeg", 
+ "https://i.imgur.com/mkYGNNk.jpeg",   
+ "https://i.imgur.com/gF5wIwg.jpeg",
+ "https://i.imgur.com/UAmIDz2.jpeg", 
+ "https://i.imgur.com/6b6DGcW.jpeg", 
+ "https://i.imgur.com/FQQq8WH.jpeg"
+ 
  ];
 
  const imgPath = __dirname + "/cache/time.jpg";
@@ -45,7 +47,7 @@ module.exports.run = async function({ api, event }) {
 
 ⏱️ 𝗕𝗼𝘁 𝗨𝗽𝘁𝗶𝗺𝗲: ${hours} hour(s), ${minutes} minute(s), ${seconds} second(s)
 
-💠𝗕𝗢𝗧 𝗔𝗗𝗠𝗜𝗡 𝗦𝗔𝗛𝗔𝗗𝗔𝗧~𝗦𝗔𝗛𝗨💠
+💠ꘉ̸̅̊̊̊̊̊̊̊̊̊̊̊̊̇̇̇̇̇̇̇ꘉ̸̅̊̊̊̊̊̊̊̊̊̊̊̊ꘉ̸̅̊̊̊̊̊̊̊̊ꘉ̸̅̊̊̊̊̊ꘉ̸̅̊̊ꘉ̸̅ꕹ😈ꙮB̸E̸L̸A̸L̸<>B̸O̸T̸~X̸6̸6̸6̸ꙮ✡️ꕹꘉ̸̅ꘉ̸̅̊̊ꘉ̸̅̊̊̊̊̊ꘉ̸̅̊̊̊̊̊̊̊̊ꘉ̸̅̊̊̊̊̊̊̊̊̊̊̊̊ꘉ̸̅̊̊̊̊̊̊̊̊̊̊̊̊̇̇̇̇̇̇̇       💠
 
 
 ¶────██████────¶
@@ -63,7 +65,7 @@ module.exports.run = async function({ api, event }) {
 ¶────◥████◤────¶
 ¶─────◥██◤─────¶
 
-🌟 ─꯭─⃝‌‌𝐒𝐡𝐚𝐡𝐚𝐝𝐚𝐭 𝐂𝐡𝐚𝐭 𝐁𝐨𝐭 🌟`;
+🌟┄┉❈✡️⋆⃝ চাঁদেড়~পাহাড়✿⃝🪬❈┉┄🌟`;
 
  const callback = () => {
  api.sendMessage({
