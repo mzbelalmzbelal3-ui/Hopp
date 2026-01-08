@@ -3,7 +3,7 @@ const fs = require('fs-extra');
 const path = require('path');
 
 module.exports.config = {
-  name: "Tik Tok",
+  name: "short ",
   version: "2.1",
   hasPermssion: 0,
   credits: "Mahi-- (Mirai Version)",
