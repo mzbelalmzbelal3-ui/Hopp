@@ -93,12 +93,12 @@ module.exports.handleEvent = async function({ api, event, args, Threads, Users }
      return api.sendMessage("সরি বস চাঁদের পাহাড় আমাকে মাফ করে দেন আর এমন ভুল হবে না🥺🙏", threadID);
    };
 
-   if ((event.body.toLowerCase() == "@Mst Sadiya") || (event.body.toLowerCase() == "@Kolpona Akter")) {
-     return api.sendMessage("খবরদার কেউ এই আইড়ি মেনশন দিবানা এটা আমার বস বিল্লাল এর বউ এর আইড়ি😠🥰⛏️", threadID);
+   if ((event.body.toLowerCase() == "@Arora Chaudhury") || (event.body.toLowerCase() == "Arora Chaudhury")) {
+     return api.sendMessage("খবরদার কেউ এই আইড়ি মেনশন দিবানা এটা আমার বস চাঁদের পাহাড় এর বউ এর আইড়ি😠🥰⛏️", threadID);
    };
 
-  if ((event.body.toLowerCase() == "@Mst Popy Rani") || (event.body.toLowerCase() == "@Alima Akter")) {
-     return api.sendMessage("খবরদার কেউ এই নাম দরে ডাক দিবানা এটা আমার বস বিল্লাল এর বউ এর নাম..!😠🥰⛏️", threadID);
+  if ((event.body.toLowerCase() == "Arora") || (event.body.toLowerCase() == "সিমলা")) {
+     return api.sendMessage("এই শোন এটা আমার মালিক চাঁদের পাহাড় এর বউ লাগে কেউ নজর দিবি না 🤨", threadID);
    };
   
   if ((event.body.toLowerCase() == "Nadiya") || (event.body.toLowerCase() == "@Kolpona Akter ")) {
