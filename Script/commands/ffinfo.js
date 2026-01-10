@@ -1,137 +1,132 @@
-const axios = require("axios");
+const axios = require('axios');
+const { createCanvas, loadImage } = require('canvas');
+const fs = require('fs-extra');
+const path = require('path');
 
 module.exports.config = {
-name: "ff",
-version: "1.0.0",
-hasPermssion: 0,
-credits: "SHAHADAT SAHU", //Don't Change Credit ✅
-description: "Free Fire info",
-commandCategory: "FreeFire",
-usages: "ff <UID>",
-cooldowns: 3
+  name: "ffinfo",
+  version: "12.0.0",
+  hasPermssion: 0,
+  credits: "ALVI-BOSS",
+  description: "Get Premium Free Fire Profile with Avatar & Banner",
+  commandCategory: "game",
+  usages: "[UID]",
+  cooldowns: 15,
 };
 
-const rankNames = ["Bronze","Silver","Gold","Platinum","Diamond","Heroic","Grandmaster"];
+module.exports.run = async function ({ api, event, args }) {
+  const { threadID, messageID } = event;
+  const uid = args[0];
 
-module.exports.run = async function({ api, event, args }) {
-const { threadID } = event;
-const uid = args[0];
-if (!uid) return api.sendMessage("একটি UID দিন! Example: ff 1795909601", threadID);
+  if (!uid || isNaN(uid)) return api.sendMessage("⚠️ দয়া করে একটি সঠিক UID দিন! উদাহরণ: /ffinfo 12345678", threadID, messageID);
 
-let msg;  
-try {   
-    msg = await api.sendMessage("🔍 Searching Free Fire player...", threadID);   
-} catch {   
-    msg = { messageID: null };   
-}  
-const msgID = msg.messageID;  
+  try {
+    api.setMessageReaction("🔍", messageID, (err) => {}, true);
+    
+    // ১. ডাটা ফেচিং (Updated API)
+    const { data } = await axios.get(`https://free-fire-api-sh-6.onrender.com/freefire/info?uid=${uid}`);
+    
+    if (!data.nickname) return api.sendMessage("❌ প্লেয়ার খুঁজে পাওয়া যায়নি!", threadID, messageID);
 
-const regions = ["BD","IN","SG","ID","BR","VN","TH"];  
-let found = false, data, usedRegion;  
+    // ২. ইমেজ ইউআরএল (Avatar & Banner)
+    const avatarUrl = data.avatar_url || "https://i.imgur.com/8Y5z3fK.png";
+    const bannerUrl = data.banner_url || "https://i.imgur.com/8Y5z3fK.png";
+    const rankIcon = data.rank_icon || "https://i.imgur.com/8Y5z3fK.png";
 
-for (const region of regions) {  
-    try {  
-        const res = await axios.get(`https://info-ob49.vercel.app/api/account/?uid=${uid}&region=${region}`);  
-        if (res.data.basicInfo && !res.data.error) {  
-            data = res.data;  
-            usedRegion = region;  
-            found = true;  
-            break;  
-        }  
-    } catch {}  
-}  
+    // ৩. ক্যানভাস ডিজাইন শুরু
+    const canvas = createCanvas(1200, 700);
+    const ctx = canvas.getContext('2d');
 
-if (!found) {  
-    try { await api.editMessage("Player পাওয়া যায়নি! সঠিক UID দিন!✔️", msgID); }   
-    catch { await api.sendMessage("Player পাওয়া যায়নি! সঠিক UID দিন!✔️", threadID); }  
-    return;  
-}  
+    // ব্যাকগ্রাউন্ড হিসেবে গেম ব্যানার ব্যবহার (Blurred & Darkened)
+    const bannerImg = await loadImage(bannerUrl);
+    ctx.filter = 'blur(10px) brightness(40%)';
+    ctx.drawImage(bannerImg, 0, 0, 1200, 700);
+    ctx.filter = 'none';
 
-const b = data.basicInfo || {};  
-const p = data.profileInfo || {};  
-const c = data.clanBasicInfo || {};  
+    // মেইন গ্লাস কার্ড ইফেক্ট
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    roundRect(ctx, 50, 50, 1100, 600, 40, true, false);
+    ctx.strokeStyle = '#00f2ff';
+    ctx.lineWidth = 4;
+    roundRect(ctx, 50, 50, 1100, 600, 40, false, true);
 
+    // ৪. ব্যানার ইমেজ ড্রয়িং (কার্ডের ভেতর ছোট করে)
+    ctx.save();
+    roundRect(ctx, 100, 100, 400, 200, 20, false, false);
+    ctx.clip();
+    ctx.drawImage(bannerImg, 100, 100, 400, 200);
+    ctx.restore();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 3;
+    roundRect(ctx, 100, 100, 400, 200, 20, false, true);
 
-const totalMatches = b.totalMatches || 0;  
-const wins = b.wins || 0;  
-const totalKills = b.totalKills || 0;  
-const totalDeaths = b.totalDeaths || 0;  
+    // ৫. অবতার (Profile Picture)
+    const avatarImg = await loadImage(avatarUrl);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(300, 300, 80, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(avatarImg, 220, 220, 160, 160);
+    ctx.restore();
+    ctx.strokeStyle = '#00f2ff';
+    ctx.stroke();
 
-const winRate = totalMatches > 0 ? ((wins/totalMatches)*100).toFixed(2) : "0.00";  
-const kdRatio = totalDeaths > 0 ? (totalKills/totalDeaths).toFixed(2) : "∞";  
-const headshotRate = b.headshotRate != null ? b.headshotRate.toFixed(2) : "N/A";  
-const created = b.createTime ? new Date(b.createTime).toLocaleString() : "N/A";  
+    // ৬. টেক্সট এবং ডাটা রেন্ডারিং
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 55px sans-serif";
+    ctx.fillText(data.nickname.toUpperCase(), 550, 160);
 
-const csRankName = (b.csRank > 0 && b.csRank <= rankNames.length) ? rankNames[b.csRank-1] : "N/A";  
-const brRankName = (b.brRank > 0 && b.brRank <= rankNames.length) ? rankNames[b.brRank-1] : "N/A";  
+    ctx.fillStyle = "#00f2ff";
+    ctx.font = "30px sans-serif";
+    ctx.fillText(`UID: ${uid}`, 550, 210);
 
-const loadingSteps = [  
-    "✨ Preparing profile data...",  
-    "⚡ Fetching stats...",  
-    "📊 Calculating K/D, Win Rate...",  
-    "🎯 Almost done..."  
-];  
+    // ইনফরমেশন গ্রিড
+    ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+    roundRect(ctx, 550, 250, 500, 300, 20, true, false);
 
-async function safeEditMessage(api, msgID, text) {  
-    try {  
-        if (!msgID) return api.sendMessage(text, threadID);  
-        await Promise.race([  
-            api.editMessage(text, msgID),  
-            new Promise((_, reject) => setTimeout(() => reject("timeout"), 3000))  
-        ]);  
-    } catch (err) {  
-        console.warn("Edit message failed or timeout:", err);  
-        if (!msgID) await api.sendMessage(text, threadID);  
-    }  
-}  
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 32px sans-serif";
+    ctx.fillText(`Level: ${data.level || "N/A"}`, 580, 310);
+    ctx.fillText(`Region: ${data.region || "BD"}`, 580, 370);
+    ctx.fillText(`Like: ${data.likes || "0"} ❤️`, 580, 430);
+    ctx.fillText(`Rank: ${data.rank || "Unknown"}`, 580, 490);
 
- 
-for (const step of loadingSteps) {  
-    await new Promise(r => setTimeout(r, 800));  
-    if (msgID) await safeEditMessage(api, msgID, `🔄 ${step}`);  
-}  
+    // র‍্যাঙ্ক আইকন
+    const rankImg = await loadImage(rankIcon);
+    ctx.drawImage(rankImg, 950, 430, 80, 80);
 
-await new Promise(r => setTimeout(r, 200));  
+    // ৭. সেভ এবং আউটপুট
+    const outPath = path.join(__dirname, 'cache', `ff_${uid}.png`);
+    if (!fs.existsSync(path.join(__dirname, 'cache'))) fs.mkdirSync(path.join(__dirname, 'cache'));
+    fs.writeFileSync(outPath, canvas.toBuffer());
 
-const finalMsg = `┏━━[ 𝐅𝐅 𝐏𝐋𝐀𝐘𝐄𝐑 𝐏𝐑𝐎𝐅𝐈𝐋𝐄 ]━━┓
+    api.setMessageReaction("✅", messageID, (err) => {}, true);
 
-┃
-┃ ✦ 𝐏𝐄𝐑𝐒𝐎𝐍𝐀𝐋 𝐈𝐍𝐅𝐎
-┃ 𝐔𝐈𝐃 ⤷ ${b.accountId || uid}
-┃ 𝐍𝐀𝐌𝐄 ⤷ ${b.nickname || "N/A"}
-┃ 𝐑𝐄𝐆𝐈𝐎𝐍 ⤷ ${usedRegion || "N/A"}
-┃ 𝐋𝐄𝐕𝐄𝐋 ⤷ ${b.level || 0}
-┃ 𝐋𝐈𝐊𝐄𝐃 ⤷ ${b.likes || 0}
-┃ 𝐒𝐈𝐆𝐍𝐀𝐓𝐔𝐑𝐄 ⤷ ${p.signature || "N/A"}
-┃
-┃ ✦ 𝐒𝐓𝐀𝐓𝐒
-┃ 𝐌𝐀𝐓𝐂𝐇𝐄𝐒 ⤷ ${totalMatches}
-┃ 𝐖𝐈𝐍𝐒 ⤷ ${wins}
-┃ 𝐊𝐈𝐋𝐋𝐒 ⤷ ${totalKills}
-┃ 𝐃𝐄𝐀𝐓𝐇𝐒 ⤷ ${totalDeaths}
-┃ 𝐇𝐄𝐀𝐃𝐒𝐇𝐎𝐓 𝐑𝐀𝐓𝐄 ⤷ ${headshotRate}%
-┃ 𝐖𝐈𝐍 𝐑𝐀𝐓𝐄 ⤷ ${winRate}%
-┃ 𝐊/𝐃 𝐑𝐀𝐓𝐈𝐎 ⤷ ${kdRatio}
-┃
-┃ ✦ 𝐑𝐀𝐍𝐊𝐈𝐍𝐆
-┃ 𝐂𝐒 𝐑𝐀𝐍𝐊 ⤷ ${csRankName} (${b.csRankPoints || 0} RP)
-┃ 𝐁𝐑 𝐑𝐀𝐍𝐊 ⤷ ${brRankName} (${b.brRankPoints || 0} RP)
-┃
-┃ ✦ 𝐏𝐄𝐓 & 𝐂𝐇𝐀𝐑𝐀𝐂𝐓𝐄𝐑
-┃ 𝐏𝐄𝐓 ⤷ ${p.petId || "N/A"}
-┃ 𝐂𝐇𝐀𝐑𝐀𝐂𝐓𝐄𝐑 ⤷ ${p.characterId || "N/A"}
-┃
-┃ ✦ 𝐆𝐔𝐈𝐋𝐃
-┃ 𝐍𝐀𝐌𝐄 ⤷ ${c.clanName || "N/A"}
-┃ 𝐋𝐄𝐕𝐄𝐋 ⤷ ${c.clanLevel || 0}
-┃ 𝐌𝐄𝐌𝐁𝐄𝐑𝐒 ⤷ ${c.membersCount || 0}/${c.maxMembers || 0}
-┃
-┃ ✦ 𝐀𝐂𝐂𝐎𝐔𝐍𝐓 𝐓𝐈𝐌𝐄
-┃ 𝐂𝐑𝐄𝐀𝐓𝐄𝐃 ⤷ ${created}
-┃
-👑 𝗗𝗲𝘃𝗲𝗹𝗼𝗽𝗲𝗿:❈⋆⃝চাঁদেড়~পাহাড়✿⃝
-┗━━━━━━━━━━━━━━━━━━━━━━┛`;
+    return api.sendMessage({
+      body: `🎮 𝗙𝗥𝗘𝗘 𝗙𝗜𝗥𝗘 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗜𝗡𝗙𝗢 🎮\n━━━━━━━━━━━━━━━━━━━━\n👤 𝗡𝗮𝗺𝗲: ${data.nickname}\n🆔 𝗨𝗜𝗗: ${uid}\n🏆 𝗥𝗮𝗻𝗸: ${data.rank}\n━━━━━━━━━━━━━━━━━━━━\n✨ 𝗗𝗲𝘀𝗶𝗴𝗻𝗲𝗱 𝗯𝘆 𝗔𝗟𝗩𝗜-𝗕𝗢𝗦𝗦`,
+      attachment: fs.createReadStream(outPath)
+    }, threadID, () => fs.unlinkSync(outPath), messageID);
 
-await safeEditMessage(api, msgID, finalMsg);
-
+  } catch (e) {
+    console.error(e);
+    api.sendMessage("❌ সার্ভার এরর! প্লেয়ার আইডি সঠিক কিনা চেক করুন।", threadID, messageID);
+  }
 };
+
+function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  if (fill) ctx.fill();
+  if (stroke) ctx.stroke();
+}
