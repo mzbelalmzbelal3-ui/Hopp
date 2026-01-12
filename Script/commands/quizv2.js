@@ -24,7 +24,7 @@ function formatBalance(num) {
 }
 
 module.exports.config = {
-  name: "quiz",
+  name: "quizv2",
   version: "10.0.0",
   hasPermssion: 0,
   credits: "MOHAMMAD AKASH",
